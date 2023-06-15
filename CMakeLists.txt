@@ -9,14 +9,16 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
   add_compile_definitions(SHOW_CONSOLE)
 endif()
 
-add_library(SC-Bot SHARED src/main.cpp)
-
 include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:matcool/mat-dash#cdc9f70")
 CPMAddPackage("gh:HJfod/cocos-headers#cbf79fc")
 CPMAddPackage("gh:HJfod/gd.h#90f2110")
 CPMAddPackage("gh:TsudaKageyu/minhook#4a45552")
+
+file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
+
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 target_compile_definitions(SC-Bot PRIVATE CC_DLL=)
 
