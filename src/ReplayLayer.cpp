@@ -1,5 +1,6 @@
 #include "ReplayLayer.h"
 #include "ReplaySystem.h"
+#include <nfd.h>
 
 bool ReplayLayer::Init() {
     if(!initWithColor(ccc4(0, 0, 0, 130))) return false;
@@ -99,8 +100,28 @@ void ReplayLayer::onPlay(CCObject*) {
     ReplaySystem::get().togglePlaying();
 }
 
-void ReplayLayer::onSave(CCObject*) {}
+void ReplayLayer::onSave(CCObject*) {
+    nfdchar_t* path = nullptr;
+    nfdfilteritem_t filterItem[1] = {{"SC-Bot Replay", "screp"}};
+    auto result = NFD_SaveDialog(&path, filterItem, 1, NULL, NULL);
+    if(result == NFD_OKAY) {
+        ReplaySystem::get().getReplay().Save(path);
+        FLAlertLayer::create(nullptr, "Info", "Ok", nullptr, "Replay saved.")->show();
+        free(path);
+    }
+}
 
-void ReplayLayer::onLoad(CCObject*) {}
+void ReplayLayer::onLoad(CCObject*) {
+    nfdchar_t* path = nullptr;
+    nfdfilteritem_t filterItem[1] = {{"SC-Mod Replay", "screp"}};
+    auto result = NFD_OpenDialog(&path, filterItem, 1, NULL);
+    if (result == NFD_OKAY) {
+        auto& RS = ReplaySystem::get();
+        RS.getReplay() = Replay::Load(path);
+        if(!RS.isPlaying()) RS.togglePlaying();
+        FLAlertLayer::create(nullptr, "Info", "Ok", nullptr, "Replay loaded.")->show();
+        free(path);
+    }
+}
 
 void ReplayLayer::onRender(CCObject*) {}

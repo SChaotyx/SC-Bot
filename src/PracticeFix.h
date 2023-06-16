@@ -21,7 +21,7 @@ struct Checkpoint {
     CheckpointData player2;
     size_t activatedObjectsSize;
     size_t activatedObjectsP2Size;
-    double time;
+    int frame;
 };
 
 class CheckpointObjectMod : public CheckpointObject {

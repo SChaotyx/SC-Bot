@@ -10,24 +10,19 @@ enum RSState {
     PLAYING
 };
 
-enum PlayMode {
-    xpos,
-    frame
-};
-
 class ReplaySystem {
     Replay replay;
     RSState state = NOTHING;
     int defFps;
-    ReplayType defType;
-    PlayMode playMode = PlayMode::frame;
+
     bool autoRec = false;
+
     int frameOffset = 0;
     size_t actionIndex = 0;
 
     PracticeFix practiceFix;
 
-    ReplaySystem() : defFps(60), replay(defFps), defType(replay.getType()) {}
+    ReplaySystem() : defFps(60), replay(defFps) {}
 
 public:
     static auto& get() {
@@ -39,11 +34,9 @@ public:
 
     inline auto& getReplay() { return replay; }
     inline auto getDefFps() { return defFps; }
-    inline auto getDefType() { return defType; }
     inline auto& getPracticeFix() { return practiceFix; }
 
     inline void setDefFps(int fps) { defFps = fps; }
-    inline void setDefType(ReplayType type) { defType = type; }
 
     inline bool isPlaying() { return state == PLAYING; }
     inline bool isRecording() { return state == RECORDING; }
@@ -69,8 +62,7 @@ public:
 
     void onReset();
 
-    int getCurrentFrame();
-    int getActionFrame(double);
+    int getFrame();
 
     void Save();
     void Load();

@@ -10,9 +10,8 @@ void ReplaySystem::recordAction(bool hold, bool player1, bool flip) {
     Action action;
     action.holdP1 = hold;
     action.holdP2 = isTwoPlayer && !player1;
-    action.xpos = PL->m_pPlayer1->m_position.x;
-    action.time = PL->m_time;
-    std::cout << action.time << " | " << PL->m_time << std::endl;
+    action.frame = getFrame();
+    std::cout << action.frame <<  " | " << action.holdP1 << " | " << action.holdP2 << std::endl;
     replay.addAction(action);
 }
 
@@ -35,38 +34,21 @@ void ReplaySystem::playAction(const Action& action) {
 }
 
 void ReplaySystem::handlePlaying() {
-    //std::cout << GameManager::sharedState()->getPlayLayer()->m_time;
     if(!isPlaying()) return;
-    auto xpos = GameManager::sharedState()->getPlayLayer()->m_pPlayer1->m_position.x;
     auto& actions = replay.getActions();
     Action action;
-    // here get play type instead of replay type because time and xpos is stored
-    if(playMode == PlayMode::xpos) {
-         while (actionIndex < actions.size() && xpos <= (action = actions[actionIndex]).xpos) {
-            playAction(action);
-            ++actionIndex;
-         }
-    } else {
-        while (actionIndex < actions.size() && getCurrentFrame() >= getActionFrame((action = actions[actionIndex]).time)) {
-            playAction(action);
-            ++actionIndex;
-        }
+    while (actionIndex < actions.size() && getFrame() >= (action = actions[actionIndex]).frame) {
+        playAction(action);
+        ++actionIndex;
     }
 }
 
-int ReplaySystem::getCurrentFrame() {
+int ReplaySystem::getFrame() {
     auto PL = GameManager::sharedState()->getPlayLayer();
-    if(PL != nullptr) {
-        return static_cast<int>(PL->m_time * getDefFps()) + frameOffset;
-    }
-    return 0;
+    if(PL != nullptr)
+        return static_cast<int>(PL->m_time * replay.getFps()) + frameOffset;
+        return 0;
 }
-
-int ReplaySystem::getActionFrame(double time) {
-    //get fps from rp system not from replay
-    return static_cast<int>(time * getDefFps());
-}
-
 
 void ReplaySystem::togglePlaying() {
     state = isPlaying() ? NOTHING : PLAYING;
@@ -81,13 +63,14 @@ void ReplaySystem::togglePlaying() {
 void ReplaySystem::toggleRecording() {
     state = isRecording() ? NOTHING : RECORDING;
     if(isRecording()) {
-        replay = Replay(defFps, defType);
-        std::cout << "isRecoring" << std::endl;
+        replay = Replay(defFps);
+        std::cout << "isRecording" << std::endl;
     }
     updateFrameOffset();
 }
 
 void ReplaySystem::onReset() {
+    std::cout << replay.getActions().size() << std::endl;
     auto PL = GameManager::sharedState()->getPlayLayer();
     if(isPlaying()) {
         updateFrameOffset();
@@ -104,7 +87,7 @@ void ReplaySystem::onReset() {
             practiceFix.activatedObjectsP2.clear();
             frameOffset = 0;
         } else {
-            frameOffset = getActionFrame(checkpoint.time);
+            frameOffset = checkpoint.frame;
             constexpr auto deleteFrom = [&](auto& vec, size_t index) {
                 vec.erase(vec.begin() + index, vec.end());
             };
@@ -120,13 +103,17 @@ void ReplaySystem::onReset() {
             }
         }
         if(isRecording() || isAutoRecEnabled()) {
-            if(replay.getType() == ReplayType::XPOS)
-                replay.removeActions(PL->m_pPlayer1->m_position.x);
-            else
-                replay.removeActions(PL->m_time);
+            replay.removeActions(getFrame());
             const auto& actions = replay.getActions();
             bool holding = PL->m_pPlayer1->m_isHolding;
             if((holding && actions.empty()) || (!actions.empty() && actions.back().holdP1 != holding)) {
+                recordAction(holding, true, false);
+                if(holding) {
+                    matdash::orig<&GDPlayLayer::ReleaseButton>(PL, 0, true);
+                    matdash::orig<&GDPlayLayer::PushButton>(PL, 0, true);
+                    PL->m_pPlayer1->m_hasJustHeld = true;
+                }
+            } else if (!actions.empty() && actions.back().holdP1 && holding && hasCheckpoints && checkpoint.player1.bufferOrb) {
                 matdash::orig<&GDPlayLayer::ReleaseButton>(PL, 0, true);
                 matdash::orig<&GDPlayLayer::PushButton>(PL, 0, true);
             }
@@ -135,10 +122,11 @@ void ReplaySystem::onReset() {
             if(hasCheckpoints) practiceFix.applyCheckpoint();
         }
     }
+    std::cout << replay.getActions().size() << std::endl;
 }
 
 void ReplaySystem::updateFrameOffset() {
-    frameOffset = getActionFrame(practiceFix.getLastCheckpoint().time);
+    frameOffset = practiceFix.getLastCheckpoint().frame;
 }
 
 void ReplaySystem::handleActivatedObj(bool a , bool b, GameObject* object) {

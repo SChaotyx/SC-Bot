@@ -80,6 +80,7 @@ bool GDPlayLayer::Init(PlayLayer* self, GJGameLevel* level) {
 
 void GDPlayLayer::Update(PlayLayer* self, float dt) {
     auto& RS = ReplaySystem::get();
+    //std::cout << self->m_time << std::endl;
     if(RS.isPlaying()) RS.handlePlaying();
     matdash::orig<&GDPlayLayer::Update, matdash::Thiscall>(self, dt);
 }

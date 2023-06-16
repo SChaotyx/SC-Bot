@@ -15,7 +15,7 @@ Checkpoint PracticeFix::createCheckpoint() {
             CheckpointData::fromPlayer(PL->m_pPlayer2),
             activatedObjects.size(),
             activatedObjectsP2.size(),
-            PL->m_time
+            RS.getFrame()
         };
     } else {
         return {};
