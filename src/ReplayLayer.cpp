@@ -171,19 +171,24 @@ void ReplayLayer::keyBackClicked() {
 
 void ReplayLayer::onRecord(CCObject*) {
     auto& RS = ReplaySystem::get();
-    if(RS.getReplay().getActions().empty()) {
+    if(!RS.isRecording()){
+        if(RS.getReplay().getActions().empty()) {
+            RS.toggleRecording();
+            updateReplayInfo();
+        } else {
+            auto alert = FLAlertLayer::create(
+                this,
+                "Warning",
+                "Ok",
+                "Cancel",
+                "This will <cr>overwrite</c> your current replay."
+            );
+            alert->setTag(100);
+            alert->show();
+        }
+    } else {
         RS.toggleRecording();
         updateReplayInfo();
-    } else {
-        auto alert = FLAlertLayer::create(
-            this,
-            "Warning",
-            "Ok",
-            "Cancel",
-            "This will <cr>overwrite</c> your current replay."
-        );
-        alert->setTag(100);
-        alert->show();
     }
 }
 
