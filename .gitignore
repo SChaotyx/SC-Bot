@@ -3,3 +3,4 @@ out/
 .vs/
 .vscode/
 run.bat
+src/Version.h

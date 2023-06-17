@@ -1,8 +1,10 @@
 #include "ReplaySystem.h"
 #include "Hooks.h"
+#include "Utils.h"
+#include "SCManager.h"
 
 void ReplaySystem::recordAction(bool hold, bool player1, bool flip) {
-    if(!(isRecording() || isAutoRecEnabled())) return;
+    if(!(isRecording() || isAutoRecording())) return;
     auto GM = GameManager::sharedState();
     auto PL = GM->getPlayLayer();
     auto isTwoPlayer = PlayLayer::get()->m_level->m_bTwoPlayerMode;
@@ -58,6 +60,7 @@ void ReplaySystem::togglePlaying() {
         std::cout << "isPlaying" << std::endl;
     }
     updateFrameOffset();
+    updateStatusLabel();
 }
 
 void ReplaySystem::toggleRecording() {
@@ -67,10 +70,10 @@ void ReplaySystem::toggleRecording() {
         std::cout << "isRecording" << std::endl;
     }
     updateFrameOffset();
+    updateStatusLabel();
 }
 
 void ReplaySystem::onReset() {
-    std::cout << replay.getActions().size() << std::endl;
     auto PL = GameManager::sharedState()->getPlayLayer();
     if(isPlaying()) {
         updateFrameOffset();
@@ -93,7 +96,7 @@ void ReplaySystem::onReset() {
             };
             deleteFrom(practiceFix.activatedObjects, checkpoint.activatedObjectsSize);
             deleteFrom(practiceFix.activatedObjectsP2, checkpoint.activatedObjectsP2Size);
-            if (isRecording() || isAutoRecEnabled()) {
+            if (isRecording() || isAutoRecording()) {
                 for (const auto& object : practiceFix.activatedObjects) {
                     object->m_bHasBeenActivated = true;
                 }
@@ -102,7 +105,7 @@ void ReplaySystem::onReset() {
                 }
             }
         }
-        if(isRecording() || isAutoRecEnabled()) {
+        if(isRecording() || isAutoRecording()) {
             replay.removeActions(getFrame());
             const auto& actions = replay.getActions();
             bool holding = PL->m_pPlayer1->m_isHolding;
@@ -122,7 +125,6 @@ void ReplaySystem::onReset() {
             if(hasCheckpoints) practiceFix.applyCheckpoint();
         }
     }
-    std::cout << replay.getActions().size() << std::endl;
 }
 
 void ReplaySystem::updateFrameOffset() {
@@ -139,3 +141,74 @@ void ReplaySystem::handleActivatedObj(bool a , bool b, GameObject* object) {
     }
 }
 
+auto ReplaySystem::createStatusLabel(CCLayer* layer) {
+    auto label = CCLabelBMFont::create("", "chatFont.fnt");
+    label->setTag(statusLabelTag);
+    label->setAnchorPoint({0, 0});
+    label->setPosition(5, 5);
+    label->setZOrder(999);
+    layer->addChild(label);
+    return label;
+}
+
+void ReplaySystem::updateStatusLabel() {
+    if(auto PL = GameManager::sharedState()->getPlayLayer()) {
+        auto label = cast<CCLabelBMFont*>(PL->getChildByTag(statusLabelTag));
+        if(!label) label = createStatusLabel(PL);
+        switch(state) {
+            case NOTHING:
+                label->setString("");
+                break;
+            case RECORDING:
+                label->setString(showStatus ? "Recording" : "");
+                break;
+            case PLAYING:
+                label->setString(showStatus ? "Playing" : "");
+                break;
+        }
+    }
+}
+
+void ReplaySystem::autoSaveReplay(GJGameLevel* level){
+    if(!isAutoRecording() || isPlaying()) return;
+
+    auto t = std::time(nullptr);
+    std::tm tm {};
+    localtime_s(&tm, &t);
+
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%d.%m.%Y-%H.%M.%S");
+    auto date = oss.str();
+
+    std::string levelID = std::to_string(level->m_nLevelID);
+    std::string levelName = level->m_sLevelName;
+    std::string creatorName = level->m_sCreatorName;
+    std::string folder = "SCReplays";
+
+    std::string path =
+        folder+"\\["+levelID+"]["+date+"]["+levelName+"]["+creatorName+"].screp";
+    
+    if(!std::filesystem::is_directory(folder) || !std::filesystem::exists(folder))
+        std::filesystem::create_directory(folder);
+
+    getReplay().Save(path);
+}
+
+void ReplaySystem::clearReplay() {
+    if(isAutoRecording() && (!isRecording() && !isPlaying())) {
+        replay = Replay(defFps);
+    }
+}
+
+void ReplaySystem::Load() {
+    if(SCManager::getSCModString("Bot_fps") != "")
+        defFps = std::stoi(SCManager::getSCModString("Bot_fps"));
+    autoRec = SCManager::getSCModVariable("Bot_autoRec");
+    showStatus = SCManager::getSCModVariable("Bot_showStatus");
+}
+
+void ReplaySystem::Save() {
+    SCManager::setSCModString("Bot_fps", std::to_string(defFps));
+    SCManager::setSCModVariable("Bot_autoRec", autoRec);
+    SCManager::setSCModVariable("Bot_showStatus", showStatus);
+}

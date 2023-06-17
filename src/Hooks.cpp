@@ -70,17 +70,28 @@ bool EditLevelLayer_Init(EditLevelLayer* self, GJGameLevel* level) {
     return true;
 }
 
+bool MenuLayer_Init() {
+    matdash::orig<&MenuLayer_Init>();
+    static bool hasLoaded = false;
+    if(!hasLoaded) {
+        ReplaySystem::get().Load();
+        hasLoaded = true;
+    }
+    return true;
+}
+
 // PlayLayer Hooks
 
 bool GDPlayLayer::Init(PlayLayer* self, GJGameLevel* level) {
     matdash::orig<&GDPlayLayer::Init>(self, level);
     auto& RS = ReplaySystem::get();
+    RS.clearReplay();
+    RS.updateStatusLabel();
     return true;
 }
 
 void GDPlayLayer::Update(PlayLayer* self, float dt) {
     auto& RS = ReplaySystem::get();
-    //std::cout << self->m_time << std::endl;
     if(RS.isPlaying()) RS.handlePlaying();
     matdash::orig<&GDPlayLayer::Update, matdash::Thiscall>(self, dt);
 }
@@ -97,6 +108,9 @@ void GDPlayLayer::PauseGame(PlayLayer* self, bool unk) {
 
 void GDPlayLayer::LevelComplete(PlayLayer* self) {
     auto& RS = ReplaySystem::get();
+    if(self->m_level->m_eLevelType != kGJLevelTypeEditor) {
+        if(!self->m_isPracticeMode) RS.autoSaveReplay(self->m_level);
+    }
     RS.resetState();
     matdash::orig<&GDPlayLayer::LevelComplete>(self);
 }
@@ -178,6 +192,7 @@ void Hooks::Init() {
 
     matdash::add_hook<&LevelInfoLayer_Init>(gd::base + 0x175df0);
     matdash::add_hook<&EditLevelLayer_Init>(gd::base + 0x6f5d0);
+    matdash::add_hook<&MenuLayer_Init>(gd::base + 0x1907B0);
 
     matdash::add_hook<&GDPlayLayer::Init>(gd::base + 0x1FB780);
     matdash::add_hook<&GDPlayLayer::Update, matdash::Thiscall>(gd::base + 0x2029C0);

@@ -83,5 +83,5 @@ std::string SCManager::getSCModString(std::string key) {
         }
         pos++;
     }
-    return false;
+    return "";
 }

@@ -13,6 +13,7 @@ void GJBaseGameLayer_BumpPlayer(GJBaseGameLayer*, PlayerObject*, GameObject*);
 
 bool LevelInfoLayer_Init(LevelInfoLayer*, GJGameLevel*);
 bool EditLevelLayer_Init(EditLevelLayer*, GJGameLevel*);
+bool MenuLayer_Init();
 
 namespace GDPlayLayer {
     bool Init(PlayLayer*, GJGameLevel*);

@@ -15,12 +15,15 @@ class ReplaySystem {
     RSState state = NOTHING;
     int defFps;
 
-    bool autoRec = false;
-
     int frameOffset = 0;
     size_t actionIndex = 0;
 
     PracticeFix practiceFix;
+
+    bool autoRec = false;
+    bool showStatus = false;
+    int statusLabelTag = 6000;
+    auto createStatusLabel(CCLayer*);
 
     ReplaySystem() : defFps(60), replay(defFps) {}
 
@@ -40,10 +43,13 @@ public:
 
     inline bool isPlaying() { return state == PLAYING; }
     inline bool isRecording() { return state == RECORDING; }
-    inline bool isAutoRecEnabled() { return autoRec == true; }
+    inline bool isAutoRecording() { return autoRec; }
+    inline bool isStatusLabel() { return showStatus; }
 
     void togglePlaying();
     void toggleRecording();
+    void toggleAutoRec() { autoRec = !autoRec; }
+    void toggleStatusLabel() { showStatus = !showStatus; }
 
     void updateFrameOffset();
     void updateStatusLabel();
@@ -66,4 +72,7 @@ public:
 
     void Save();
     void Load();
+
+    void autoSaveReplay(GJGameLevel*);
+    void clearReplay();
 };

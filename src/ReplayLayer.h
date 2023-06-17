@@ -1,8 +1,13 @@
 #pragma once
 
 #include "includes.h"
+#include "Nodes.h"
 
 class ReplayLayer : public FLAlertLayer, public FLAlertLayerProtocol {
+    NumberInputNode* m_fpsInput;
+    CCLabelBMFont* m_replayInfo;
+    void updateReplayInfo();
+
     public:
     ReplayLayer* create() {
         auto pRet = new ReplayLayer();
@@ -13,11 +18,10 @@ class ReplayLayer : public FLAlertLayer, public FLAlertLayerProtocol {
         CC_SAFE_DELETE(pRet);
         return nullptr;
     }
-
     bool Init();
     void OpenCallback(CCObject*);
     void CloseCallback(CCObject*) { keyBackClicked(); }
-    void keyBackClicked() { FLAlertLayer::keyBackClicked(); }
+    void keyBackClicked();
     void keyDown(enumKeyCodes key) { if(key == 27) keyBackClicked(); }
 
     void onRecord(CCObject*);
@@ -25,4 +29,11 @@ class ReplayLayer : public FLAlertLayer, public FLAlertLayerProtocol {
     void onSave(CCObject*);
     void onLoad(CCObject*);
     void onRender(CCObject*);
+
+    void onToggleAutoRec(CCObject*);
+    void onToggleStatusLabel(CCObject*);
+    void onOpenRepFolder(CCObject*);
+
+    void loadReplay();
+    virtual void FLAlert_Clicked(FLAlertLayer*, bool);
 };

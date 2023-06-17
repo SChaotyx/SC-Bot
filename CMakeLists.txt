@@ -26,6 +26,18 @@ file(
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
+execute_process(
+  COMMAND git rev-parse --short HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE COMMIT_HASH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+configure_file(
+  "${CMAKE_SOURCE_DIR}/src/Version.h.in"
+  "${CMAKE_SOURCE_DIR}/src/Version.h"
+)
+
 target_compile_definitions(SC-Bot PRIVATE CC_DLL=)
 
 target_include_directories(SC-Bot PRIVATE
