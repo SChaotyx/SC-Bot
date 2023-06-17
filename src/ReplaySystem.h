@@ -25,6 +25,8 @@ class ReplaySystem {
     int statusLabelTag = 6000;
     auto createStatusLabel(CCLayer*);
 
+    bool restartFlag = false;
+
     ReplaySystem() : defFps(60), replay(defFps) {}
 
 public:
@@ -40,11 +42,13 @@ public:
     inline auto& getPracticeFix() { return practiceFix; }
 
     inline void setDefFps(int fps) { defFps = fps; }
+    inline void setRestartFlag(bool a) { restartFlag = a; }
 
     inline bool isPlaying() { return state == PLAYING; }
     inline bool isRecording() { return state == RECORDING; }
     inline bool isAutoRecording() { return autoRec; }
     inline bool isStatusLabel() { return showStatus; }
+    inline bool isRestartFlag() { return restartFlag; }
 
     void togglePlaying();
     void toggleRecording();
@@ -56,6 +60,7 @@ public:
 
     void resetState() {
         state = NOTHING;
+        restartFlag = false;
         updateFrameOffset();
     }
 

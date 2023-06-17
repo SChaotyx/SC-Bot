@@ -57,7 +57,10 @@ void ReplaySystem::togglePlaying() {
     auto PL = GameManager::sharedState()->getPlayLayer();
     if(isPlaying()) {
         actionIndex = 0;
-        std::cout << "isPlaying" << std::endl;
+        if(GameManager::sharedState()->getPlayLayer())
+            setRestartFlag(true);
+    } else {
+        setRestartFlag(false);
     }
     updateFrameOffset();
     updateStatusLabel();
@@ -67,7 +70,10 @@ void ReplaySystem::toggleRecording() {
     state = isRecording() ? NOTHING : RECORDING;
     if(isRecording()) {
         replay = Replay(defFps);
-        std::cout << "isRecording" << std::endl;
+        if(GameManager::sharedState()->getPlayLayer())
+            setRestartFlag(true);
+    } else {
+        setRestartFlag(false);
     }
     updateFrameOffset();
     updateStatusLabel();

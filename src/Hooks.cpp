@@ -165,13 +165,18 @@ bool GDPauseLayer::Init(PauseLayer* self) {
 }
 
 void GDPauseLayer::onResume(PauseLayer* self , CCObject* sender) {
-    //check if required restart on resume
     matdash::orig<&GDPauseLayer::onResume>(self, sender);
+    auto& RS = ReplaySystem::get();
+    if(RS.isRestartFlag()) {
+        auto PL = GameManager::sharedState()->getPlayLayer();
+        matdash::orig<&GDPlayLayer::Reset>(PL);
+        RS.setRestartFlag(false);
+    }
 }
 
 void GDPauseLayer::onRestart(PauseLayer* self, CCObject* sender) {
-    //turn false restart flag
     matdash::orig<&GDPauseLayer::onRestart>(self, sender);
+    ReplaySystem::get().setRestartFlag(false);
 }
 
 void GDPauseLayer::onEditor(PauseLayer* self, CCObject* sender) {
