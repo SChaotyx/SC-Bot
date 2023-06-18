@@ -138,6 +138,12 @@ void GDPlayLayer::ReleaseButton(PlayLayer*self, int unk, bool button) {
     matdash::orig<&GDPlayLayer::ReleaseButton>(self, unk, button);
 }
 
+void GDPlayLayer::PushButtonO(PlayLayer*self, int unk, bool button)
+{ matdash::orig<&GDPlayLayer::PushButton>(self, unk, button); }
+
+void GDPlayLayer::ReleaseButtonO(PlayLayer*self, int unk, bool button)
+{ matdash::orig<&GDPlayLayer::ReleaseButton>(self, unk, button); }
+
 CCObject* GDPlayLayer::CheckpointCreate() {
     return CheckpointObjectMod::create();
 }

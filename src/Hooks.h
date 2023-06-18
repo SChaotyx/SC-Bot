@@ -25,6 +25,8 @@ namespace GDPlayLayer {
     void Reset(PlayLayer*);
     void PushButton(PlayLayer*, int, bool);
     void ReleaseButton(PlayLayer*, int, bool);
+    void PushButtonO(PlayLayer*, int, bool);
+    void ReleaseButtonO(PlayLayer*, int, bool);
     CCObject* CheckpointCreate();
 }
 

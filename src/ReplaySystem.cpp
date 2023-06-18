@@ -30,9 +30,9 @@ void ReplaySystem::playAction(const Action& action) {
     auto flip = GM->getGameVariable("0010");
     bool hold = !action.holdP2 ^ flip; // why crash wtf
     if (action.holdP1)
-        matdash::orig<&GDPlayLayer::PushButton>(GM->getPlayLayer(), 0, hold);
+        GDPlayLayer::PushButtonO(GM->getPlayLayer(), 0, hold);
     else
-        matdash::orig<&GDPlayLayer::ReleaseButton>(GM->getPlayLayer(), 0, hold);
+        GDPlayLayer::ReleaseButtonO(GM->getPlayLayer(), 0, hold);
 }
 
 void ReplaySystem::handlePlaying() {
@@ -83,8 +83,8 @@ void ReplaySystem::onReset() {
     auto PL = GameManager::sharedState()->getPlayLayer();
     if(isPlaying()) {
         updateFrameOffset();
-        matdash::orig<&GDPlayLayer::ReleaseButton>(PL, 0, false);
-        matdash::orig<&GDPlayLayer::ReleaseButton>(PL, 0, true);
+        GDPlayLayer::ReleaseButtonO(PL, 0, false);
+        GDPlayLayer::ReleaseButtonO(PL, 0, true);
         actionIndex = 0;
         practiceFix.activatedObjects.clear();
         practiceFix.activatedObjectsP2.clear();
@@ -118,13 +118,13 @@ void ReplaySystem::onReset() {
             if((holding && actions.empty()) || (!actions.empty() && actions.back().holdP1 != holding)) {
                 recordAction(holding, true, false);
                 if(holding) {
-                    matdash::orig<&GDPlayLayer::ReleaseButton>(PL, 0, true);
-                    matdash::orig<&GDPlayLayer::PushButton>(PL, 0, true);
+                    GDPlayLayer::ReleaseButtonO(PL, 0, true);
+                    GDPlayLayer::PushButtonO(PL, 0, true);
                     PL->m_pPlayer1->m_hasJustHeld = true;
                 }
             } else if (!actions.empty() && actions.back().holdP1 && holding && hasCheckpoints && checkpoint.player1.bufferOrb) {
-                matdash::orig<&GDPlayLayer::ReleaseButton>(PL, 0, true);
-                matdash::orig<&GDPlayLayer::PushButton>(PL, 0, true);
+                GDPlayLayer::ReleaseButtonO(PL, 0, true);
+                GDPlayLayer::PushButtonO(PL, 0, true);
             }
             if(PlayLayer::get()->m_level->m_bTwoPlayerMode)
                 recordAction(false, false, false);
