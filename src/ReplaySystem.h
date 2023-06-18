@@ -62,6 +62,7 @@ public:
         state = NOTHING;
         restartFlag = false;
         updateFrameOffset();
+        updateStatusLabel();
     }
 
     void recordAction(bool, bool, bool flip = true);
