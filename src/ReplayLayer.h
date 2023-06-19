@@ -6,7 +6,10 @@
 class ReplayLayer : public FLAlertLayer, public FLAlertLayerProtocol {
     NumberInputNode* m_fpsInput;
     CCLabelBMFont* m_replayInfo;
+    
     void updateReplayInfo();
+    virtual void FLAlert_Clicked(FLAlertLayer*, bool);
+    void showOverwriteAlert(int);
 
     public:
     ReplayLayer* create() {
@@ -36,5 +39,4 @@ class ReplayLayer : public FLAlertLayer, public FLAlertLayerProtocol {
     void onOpenRepFolder(CCObject*);
 
     void loadReplay();
-    virtual void FLAlert_Clicked(FLAlertLayer*, bool);
 };

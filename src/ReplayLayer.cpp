@@ -181,24 +181,15 @@ void ReplayLayer::keyBackClicked() {
     FLAlertLayer::keyBackClicked();
 }
 
-
 void ReplayLayer::onRecord(CCObject*) {
     auto& RS = ReplaySystem::get();
     if(!RS.isRecording()){
-        if(RS.getReplay().getActions().empty()) {
-            RS.toggleRecording();
-            updateReplayInfo();
-        } else {
-            auto alert = FLAlertLayer::create(
-                this,
-                "Warning",
-                "Ok",
-                "Cancel",
-                "This will <cr>overwrite</c> your current replay."
-            );
-            alert->setTag(100);
-            alert->show();
-        }
+        if(PlayLayer::get()) {
+            if(RS.isPlaying()) {
+                RS.toggleRecording();
+                updateReplayInfo();
+            } else showOverwriteAlert(100);
+        } else  showOverwriteAlert(100);
     } else {
         RS.toggleRecording();
         updateReplayInfo();
@@ -226,15 +217,7 @@ void ReplayLayer::onLoad(CCObject*) {
     if(RS.getReplay().getActions().empty()) {
         loadReplay();
     } else {
-        auto alert = FLAlertLayer::create(
-            this,
-            "Warning",
-            "Ok",
-            "Cancel",
-            "This will <cr>overwrite</c> your current replay."
-        );
-        alert->setTag(101);
-        alert->show(); 
+        showOverwriteAlert(101);
     }
 }
 
@@ -298,6 +281,17 @@ void ReplayLayer::loadReplay() {
         FLAlertLayer::create(nullptr, "Info", "Ok", nullptr, "Replay loaded.")->show();
         free(path);
     }
+}
+void ReplayLayer::showOverwriteAlert(int tag) {
+    auto alert = FLAlertLayer::create(
+        this,
+        "Warning",
+        "Ok",
+        "Cancel",
+        "This will <cr>overwrite</c> your current replay."
+    );
+    alert->setTag(tag);
+    alert->show();
 }
 
 void ReplayLayer::FLAlert_Clicked(FLAlertLayer* alert, bool button2) {

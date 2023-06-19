@@ -67,14 +67,15 @@ void ReplaySystem::togglePlaying() {
 }
 
 void ReplaySystem::toggleRecording() {
+    if(!isRecording()) {
+        if(PlayLayer::get()) {
+            if(!isPlaying()) {
+                replay = Replay(defFps);
+                setRestartFlag(true);
+            } else setRestartFlag(false);
+        } else replay = Replay(defFps);
+    } else setRestartFlag(false);
     state = isRecording() ? NOTHING : RECORDING;
-    if(isRecording()) {
-        replay = Replay(defFps);
-        if(GameManager::sharedState()->getPlayLayer())
-            setRestartFlag(true);
-    } else {
-        setRestartFlag(false);
-    }
     updateFrameOffset();
     updateStatusLabel();
 }
