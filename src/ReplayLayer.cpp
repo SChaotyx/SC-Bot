@@ -127,6 +127,19 @@ bool ReplayLayer::Init() {
     label->setPosition({toggle->getPositionX() + 25, toggle->getPositionY()});
     m_pButtonMenu->addChild(label);
 
+    // real time toggle
+    toggle = gd::CCMenuItemToggler::create(checkOffSprite, checkOnSprite, this, menu_selector(ReplayLayer::onToggleRealTime));
+    toggle->setPosition({0, 30});
+    toggle->setScale(0.8f);
+    toggle->setSizeMult(1.2f);
+    toggle->toggle(RS.isRealTime());
+    m_pButtonMenu->addChild(toggle);
+    label = CCLabelBMFont::create("Real Time", "bigFont.fnt");
+    label->setAnchorPoint({0,0.5f});
+    label->setScale(0.4f);
+    label->setPosition({toggle->getPositionX() + 25, toggle->getPositionY()});
+    m_pButtonMenu->addChild(label);
+
     //ReplayInfo
     m_replayInfo = CCLabelBMFont::create("", "chatFont.fnt");
     m_replayInfo->setAnchorPoint({0, 1});
@@ -241,6 +254,14 @@ void ReplayLayer::onToggleStatusLabel(CCObject* sender) {
     if(toggle != nullptr) {
         RS.toggleStatusLabel();
         RS.updateStatusLabel();
+    }
+}
+
+void ReplayLayer::onToggleRealTime(CCObject* sender) {
+    auto toggle = cast<CCMenuItemToggler*>(sender);
+    auto& RS = ReplaySystem::get();
+    if(toggle != nullptr) {
+        RS.toggleRealTime();
     }
 }
 

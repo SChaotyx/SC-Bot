@@ -26,6 +26,7 @@ class ReplaySystem {
     auto createStatusLabel(CCLayer*);
 
     bool restartFlag = false;
+    bool realTime = false;
 
     ReplaySystem() : defFps(60), replay(defFps) {}
 
@@ -49,11 +50,13 @@ public:
     inline bool isAutoRecording() { return autoRec; }
     inline bool isStatusLabel() { return showStatus; }
     inline bool isRestartFlag() { return restartFlag; }
+    inline bool isRealTime() { return realTime; }
 
     void togglePlaying();
     void toggleRecording();
     void toggleAutoRec() { autoRec = !autoRec; }
     void toggleStatusLabel() { showStatus = !showStatus; }
+    void toggleRealTime() { realTime = !realTime; }
 
     void updateFrameOffset();
     void updateStatusLabel();

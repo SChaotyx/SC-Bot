@@ -2,8 +2,55 @@
 #include "ReplaySystem.h"
 #include "ReplayLayer.h"
 
+float dif_dt = 0.f;
+int frameCount = 0;
+float last_dt = 0;
+float detected_dt = 60 / 1;
+
 void CCScheduler_Update(CCScheduler* self, float dt) {
-    matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, dt);
+    if(last_dt == dt) frameCount++;
+    else frameCount = 0;
+    last_dt = dt;
+    if (frameCount == 120) {
+        if(detected_dt != dt) {
+            detected_dt = dt;
+            std::cout << detected_dt << std::endl;
+        }
+        frameCount = 0;
+    }
+    auto& RS = ReplaySystem::get();
+    auto PlayLayer = PlayLayer::get();
+    if(PlayLayer && (RS.isRecording() || RS.isPlaying() || RS.isAutoRecording())) {
+        int fps = RS.getReplay().getFps();
+        float target_dt = 1.f / fps;
+        // prevent increase dif_dt during reset
+        if(PlayLayer->m_time > 0.f && RS.isPlaying()) dif_dt = dif_dt + (dt - detected_dt);
+        else dif_dt = 0.f;
+        unsigned times = static_cast<int>(detected_dt / target_dt);
+        for (unsigned i = 0; i < times; ++i) {
+            if(RS.isRealTime()) {
+                matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
+            } else {
+                if(RS.isPlaying()) {
+                    // lag spike dont break playing but become unstable if it's so laggy
+                    matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
+                    while(dif_dt > target_dt) {
+                        matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
+                        dif_dt = dif_dt - target_dt;
+                    }
+                } else {
+                    // more stable but break playing
+                    if(PlayLayer->m_time > 0) // prevent reset lag
+                        matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt + ((dt - detected_dt) / times));
+                    else  
+                        matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
+                }
+            }
+        }
+    } else {
+        matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, dt);
+        if(dif_dt > 0.f) dif_dt = 0.f;
+    }
 }
 
 void GameObject_ActivateObject(GameObject* self, PlayerObject* player) {

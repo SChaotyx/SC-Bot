@@ -211,10 +211,12 @@ void ReplaySystem::Load() {
         defFps = std::stoi(SCManager::getSCModString("Bot_fps"));
     autoRec = SCManager::getSCModVariable("Bot_autoRec");
     showStatus = SCManager::getSCModVariable("Bot_showStatus");
+    realTime = SCManager::getSCModVariable("Bot_realTime");
 }
 
 void ReplaySystem::Save() {
     SCManager::setSCModString("Bot_fps", std::to_string(defFps));
     SCManager::setSCModVariable("Bot_autoRec", autoRec);
     SCManager::setSCModVariable("Bot_showStatus", showStatus);
+    SCManager::setSCModVariable("Bot_realTime", realTime);
 }

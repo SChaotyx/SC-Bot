@@ -32,6 +32,7 @@ class ReplayLayer : public FLAlertLayer, public FLAlertLayerProtocol {
 
     void onToggleAutoRec(CCObject*);
     void onToggleStatusLabel(CCObject*);
+    void onToggleRealTime(CCObject*);
     void onOpenRepFolder(CCObject*);
 
     void loadReplay();
