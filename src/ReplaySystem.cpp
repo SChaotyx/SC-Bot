@@ -129,7 +129,7 @@ void ReplaySystem::onReset() {
             }
             if(PlayLayer::get()->m_level->m_bTwoPlayerMode)
                 recordAction(false, false, false);
-            if(hasCheckpoints) practiceFix.applyCheckpoint();
+            if(hasCheckpoints && !noPracticeFix) practiceFix.applyCheckpoint();
         }
     }
 }

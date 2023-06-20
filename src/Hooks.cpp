@@ -20,13 +20,13 @@ void CCScheduler_Update(CCScheduler* self, float dt) {
     }
     auto& RS = ReplaySystem::get();
     auto PlayLayer = PlayLayer::get();
-    if(PlayLayer && (RS.isRecording() || RS.isPlaying() || RS.isAutoRecording() || RS.getRecorder().m_recording)) {
+    if(PlayLayer && !PlayLayer->m_bIsPaused && (RS.isRecording() || RS.isPlaying() || RS.isAutoRecording() || RS.getRecorder().m_recording)) {
         int fps = RS.getReplay().getFps();
         float target_dt = 1.f / fps;
         // prevent increase dif_dt during reset
         if(PlayLayer->m_time > 0.f && RS.isPlaying()) dif_dt = dif_dt + (dt - detected_dt);
         else dif_dt = 0.f;
-        unsigned times = static_cast<int>(detected_dt / target_dt);
+        unsigned times = static_cast<int>((detected_dt * RS.getSpeedhack()) / target_dt);
         for (unsigned i = 0; i < times; ++i) {
             if(RS.isRealTime() || RS.getRecorder().m_recording) {
                 matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
