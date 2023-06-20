@@ -31,12 +31,12 @@ class ReplayLayer : public FLAlertLayer, public FLAlertLayerProtocol {
     void onPlay(CCObject*);
     void onSave(CCObject*);
     void onLoad(CCObject*);
-    void onRender(CCObject*);
 
     void onToggleAutoRec(CCObject*);
     void onToggleStatusLabel(CCObject*);
     void onToggleRealTime(CCObject*);
     void onOpenRepFolder(CCObject*);
+    void onTogglePracticeFix(CCObject*);
 
     void loadReplay();
 };

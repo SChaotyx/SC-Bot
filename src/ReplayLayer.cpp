@@ -1,5 +1,6 @@
 #include "ReplayLayer.h"
 #include "ReplaySystem.h"
+#include "RecorderLayer.h"
 #include "Utils.h"
 #include <nfd.h>
 #include <shellapi.h>
@@ -28,7 +29,7 @@ bool ReplayLayer::Init() {
     button->setPosition(-195, 135);
     m_pButtonMenu->addChild(button);
 
-    auto label = CCLabelBMFont::create("SC-Bot", "bigFont.fnt");
+    auto label = CCLabelBMFont::create("Replay-Bot", "bigFont.fnt");
     label->setScale(0.8f);
     label->setPosition(0, 125);
     m_pButtonMenu->addChild(label);
@@ -42,7 +43,7 @@ bool ReplayLayer::Init() {
     btnsprite->setContentSize(CCSize(55,25));
 
     button = gd::CCMenuItemSpriteExtra::create(btnsprite, this, menu_selector(ReplayLayer::onRecord));
-    button->setPosition(-140 + (70*0), 80);
+    button->setPosition(-105 + (70*0), 80);
     m_pButtonMenu->addChild(button);
     label = CCLabelBMFont::create("Record", "goldFont.fnt");
     label->setScale(0.5f);
@@ -51,7 +52,7 @@ bool ReplayLayer::Init() {
     button->addChild(label);
 
     button = gd::CCMenuItemSpriteExtra::create(btnsprite, this, menu_selector(ReplayLayer::onPlay));
-    button->setPosition(-140 + (70*1), 80);
+    button->setPosition(-105 + (70*1), 80);
     m_pButtonMenu->addChild(button);
     label = CCLabelBMFont::create("Play", "goldFont.fnt");
     label->setScale(0.6f);
@@ -60,7 +61,7 @@ bool ReplayLayer::Init() {
     button->addChild(label);
 
     button = gd::CCMenuItemSpriteExtra::create(btnsprite, this, menu_selector(ReplayLayer::onSave));
-    button->setPosition(-140 + (70*2),80);
+    button->setPosition(-105 + (70*2),80);
     m_pButtonMenu->addChild(button);
     label = CCLabelBMFont::create("Save", "goldFont.fnt");
     label->setScale(0.6f);
@@ -69,7 +70,7 @@ bool ReplayLayer::Init() {
     button->addChild(label);
 
     button = gd::CCMenuItemSpriteExtra::create(btnsprite, this, menu_selector(ReplayLayer::onLoad));
-    button->setPosition(-140 + (70*3),80);
+    button->setPosition(-105 + (70*3),80);
     m_pButtonMenu->addChild(button);
     label = CCLabelBMFont::create("Load", "goldFont.fnt");
     label->setScale(0.6f);
@@ -77,33 +78,55 @@ bool ReplayLayer::Init() {
     label->setZOrder(1);
     button->addChild(label);
 
-    button = gd::CCMenuItemSpriteExtra::create(btnsprite, this, menu_selector(ReplayLayer::onRender));
-    button->setPosition(-140 + (70*4), 80);
-    m_pButtonMenu->addChild(button);
-    label = CCLabelBMFont::create("Render", "goldFont.fnt");
-    label->setScale(0.5f);
-    label->setPosition(28, 14.5);
-    label->setZOrder(1);
-    button->addChild(label);
+
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileNameW(GetModuleHandleA(NULL), buffer, MAX_PATH);
+    const auto path = std::filesystem::path(buffer).parent_path() / "ffmpeg.exe";
+    if (std::filesystem::exists(path)) {
+        button = gd::CCMenuItemSpriteExtra::create(btnsprite, this, menu_selector(RecorderLayer::OpenCallback));
+        button->setPosition(110, -114);
+        m_pButtonMenu->addChild(button);
+        label = CCLabelBMFont::create("Render", "goldFont.fnt");
+        label->setScale(0.5f);
+        label->setPosition(28, 14.5);
+        label->setZOrder(1);
+        button->addChild(label);
+    }
 
     // FPS Input
-    m_fpsInput = NumberInputNode::create(CCSize(64.f, 30.f));
-    m_fpsInput->set_value(static_cast<int>(RS.getDefFps()));
-    m_fpsInput->input_node->setMaxLabelScale(0.7f);
-    m_fpsInput->input_node->setMaxLabelLength(3);
-    m_fpsInput->setPosition((winSize.width / 2) - 125,(winSize.height / 2) + 30);
-    m_fpsInput->callback = [&](auto& m_fpsInput) {
-        RS.setDefFps(static_cast<int>(m_fpsInput.get_value()));
+    auto fpsInput = NumberInputNode::create(CCSize(64.f, 30.f));
+    fpsInput->set_value(static_cast<int>(RS.getDefFps()));
+    fpsInput->input_node->setMaxLabelScale(0.7f);
+    fpsInput->input_node->setMaxLabelLength(3);
+    fpsInput->setPosition((winSize.width / 2) + 50, (winSize.height / 2) + 25);
+    fpsInput->callback = [&](auto& fpsInput) {
+        RS.setDefFps(static_cast<int>(fpsInput.get_value()));
     };
-    m_pLayer->addChild(m_fpsInput, 11);
+    m_pLayer->addChild(fpsInput, 11);
     label = CCLabelBMFont::create("FPS", "bigFont.fnt");
     label->setScale(0.4f);
-    label->setPosition({-125, 53});
-    m_pButtonMenu->addChild(label);
+    label->setPosition(fpsInput->getPositionX(), fpsInput->getPositionY() + 25);
+    m_pLayer->addChild(label, 11);
+
+    // Speedhack Input
+    auto speedhackInput = FloatInputNode::create(CCSize(64.f, 30.f));
+    speedhackInput->set_value(RS.getSpeedhack());
+    speedhackInput->input_node->setMaxLabelScale(0.7f);
+    speedhackInput->input_node->setMaxLabelLength(3);
+    speedhackInput->setPosition((winSize.width / 2) + 130, (winSize.height / 2) + 25);
+    speedhackInput->callback = [&](auto& input) {
+        const auto value = input.get_value();
+        RS.setSpeedhack(value ? value.value() : 1.f);
+    };
+    m_pLayer->addChild(speedhackInput, 11);
+    label = CCLabelBMFont::create("Speedhack", "bigFont.fnt");
+    label->setScale(0.4f);
+    label->setPosition(speedhackInput->getPositionX(), speedhackInput->getPositionY() + 25);
+    m_pLayer->addChild(label, 11);
 
     // auto record/save toggle
     auto* toggle = gd::CCMenuItemToggler::create(checkOffSprite, checkOnSprite, this, menu_selector(ReplayLayer::onToggleAutoRec));
-    toggle->setPosition({-140, -20});
+    toggle->setPosition({-150, 35});
     toggle->setScale(0.8f);
     toggle->setSizeMult(1.2f);
     toggle->toggle(RS.isAutoRecording());
@@ -116,12 +139,12 @@ bool ReplayLayer::Init() {
 
     // status label toggle
     toggle = gd::CCMenuItemToggler::create(checkOffSprite, checkOnSprite, this, menu_selector(ReplayLayer::onToggleStatusLabel));
-    toggle->setPosition({45, -20});
+    toggle->setPosition({-150, 5});
     toggle->setScale(0.8f);
     toggle->setSizeMult(1.2f);
     toggle->toggle(RS.isStatusLabel());
     m_pButtonMenu->addChild(toggle);
-    label = CCLabelBMFont::create("Show Status Label", "bigFont.fnt");
+    label = CCLabelBMFont::create("Show status", "bigFont.fnt");
     label->setAnchorPoint({0,0.5f});
     label->setScale(0.4f);
     label->setPosition({toggle->getPositionX() + 25, toggle->getPositionY()});
@@ -129,12 +152,25 @@ bool ReplayLayer::Init() {
 
     // real time toggle
     toggle = gd::CCMenuItemToggler::create(checkOffSprite, checkOnSprite, this, menu_selector(ReplayLayer::onToggleRealTime));
-    toggle->setPosition({0, 30});
+    toggle->setPosition({-150, -25});
     toggle->setScale(0.8f);
     toggle->setSizeMult(1.2f);
     toggle->toggle(RS.isRealTime());
     m_pButtonMenu->addChild(toggle);
-    label = CCLabelBMFont::create("Real Time", "bigFont.fnt");
+    label = CCLabelBMFont::create("No skip FPS", "bigFont.fnt");
+    label->setAnchorPoint({0,0.5f});
+    label->setScale(0.4f);
+    label->setPosition({toggle->getPositionX() + 25, toggle->getPositionY()});
+    m_pButtonMenu->addChild(label);
+
+    // practicefix toggle
+    toggle = gd::CCMenuItemToggler::create(checkOffSprite, checkOnSprite, this, menu_selector(ReplayLayer::onTogglePracticeFix));
+    toggle->setPosition({30, -25});
+    toggle->setScale(0.8f);
+    toggle->setSizeMult(1.2f);
+    toggle->toggle(RS.isPracticeFix());
+    m_pButtonMenu->addChild(toggle);
+    label = CCLabelBMFont::create("Practice Fix", "bigFont.fnt");
     label->setAnchorPoint({0,0.5f});
     label->setScale(0.4f);
     label->setPosition({toggle->getPositionX() + 25, toggle->getPositionY()});
@@ -188,8 +224,22 @@ void ReplayLayer::onRecord(CCObject*) {
             if(RS.isPlaying()) {
                 RS.toggleRecording();
                 updateReplayInfo();
-            } else showOverwriteAlert(100);
-        } else  showOverwriteAlert(100);
+            } else {
+                if(!RS.getReplay().getActions().empty()) {
+                    showOverwriteAlert(100);
+                } else {
+                    RS.toggleRecording();
+                    updateReplayInfo();
+                }
+            }
+        } else {
+            if(!RS.getReplay().getActions().empty()) {
+                showOverwriteAlert(100);
+            } else {
+                RS.toggleRecording();
+                updateReplayInfo();
+            }
+        }
     } else {
         RS.toggleRecording();
         updateReplayInfo();
@@ -221,8 +271,6 @@ void ReplayLayer::onLoad(CCObject*) {
     }
 }
 
-void ReplayLayer::onRender(CCObject*) {}
-
 void ReplayLayer::onToggleAutoRec(CCObject* sender) {
     auto toggle = cast<CCMenuItemToggler*>(sender);
     auto& RS = ReplaySystem::get();
@@ -248,6 +296,14 @@ void ReplayLayer::onToggleRealTime(CCObject* sender) {
     }
 }
 
+void ReplayLayer::onTogglePracticeFix(CCObject* sender) {
+    auto toggle = cast<CCMenuItemToggler*>(sender);
+    auto& RS = ReplaySystem::get();
+    if(toggle != nullptr) {
+        RS.togglePracticeFix();
+    }
+}
+
 void ReplayLayer::onOpenRepFolder(CCObject*) {
     std::string folder = "SCReplays";
     if (!std::filesystem::is_directory(folder) || !std::filesystem::exists(folder))
@@ -259,10 +315,12 @@ void ReplayLayer::updateReplayInfo() {
     auto& RS = ReplaySystem::get();
     auto& replay = RS.getReplay();
     std::string replayStatus = "Stoped";
+    std::string renderStatus = "";
     if(RS.isPlaying()) replayStatus = "Playing";
     if(RS.isRecording()) replayStatus = "Recording";
+    if(RS.getRecorder().m_recording) renderStatus = " (Render)";
     std::stringstream stream;
-    stream << "Status: " << replayStatus << "\n";
+    stream << "Status: " << replayStatus << renderStatus << "\n";
     stream << "Replay:\n";
     stream << "FPS: " << replay.getFps() << "\n";
     stream << "Actions: " << replay.getActions().size();
