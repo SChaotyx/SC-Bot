@@ -124,21 +124,6 @@ bool MenuLayer_Init(MenuLayer* self) {
         ReplaySystem::get().Load();
         hasLoaded = true;
     }
-
-    auto dir = CCDirector::sharedDirector();
-    auto winSize = dir->getWinSize();
-
-    auto menu = CCMenu::create();
-    menu->setPosition(0,0);
-    self->addChild(menu);
-
-    auto sprite = CCSprite::create("SC_ReplayBtn_001.png");
-    auto button = CCMenuItemSpriteExtra::create(sprite, self, menu_selector(ReplayLayer::OpenCallback));
-    button->setScale(0.85f);
-    button->m_fBaseScale = 0.85f;
-    button->setPosition(70, winSize.height - 23);
-    menu->addChild(button);
-
     return true;
 }
 
