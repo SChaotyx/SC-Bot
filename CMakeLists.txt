@@ -13,7 +13,7 @@ include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:matcool/mat-dash#cdc9f70")
 CPMAddPackage("gh:HJfod/cocos-headers#cbf79fc")
-CPMAddPackage("gh:HJfod/gd.h#90f2110")
+CPMAddPackage("gh:SChaotyx/gd.h#2ee1f0b")
 CPMAddPackage("gh:TsudaKageyu/minhook#4a45552")
 CPMAddPackage("gh:btzy/nativefiledialog-extended#06a5c1f")
 
@@ -46,4 +46,10 @@ target_include_directories(SC-Bot PRIVATE
     ${nativefiledialog-extended_SOURCE_DIR}/src/include
 )
 
-target_link_libraries(SC-Bot mat-dash cocos2d minhook)
+target_link_libraries(SC-Bot 
+  mat-dash
+  cocos2d
+  minhook
+  opengl32
+  ${CMAKE_SOURCE_DIR}/libs/glew32.lib
+)
