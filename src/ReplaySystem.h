@@ -20,7 +20,7 @@ class ReplaySystem {
     size_t actionIndex = 0;
 
     PracticeFix practiceFix;
-    bool practiceFixEnabled = true;
+    bool noPracticeFix = false;
     Recorder recorder;
 
     bool autoRec = false;
@@ -58,14 +58,14 @@ public:
     inline bool isStatusLabel() { return showStatus; }
     inline bool isRestartFlag() { return restartFlag; }
     inline bool isRealTime() { return realTime; }
-    inline bool isPracticeFix() { return practiceFixEnabled; }
+    inline bool isNoPracticeFix() { return noPracticeFix; }
 
     void togglePlaying();
     void toggleRecording();
     void toggleAutoRec() { autoRec = !autoRec; }
     void toggleStatusLabel() { showStatus = !showStatus; }
     void toggleRealTime() { realTime = !realTime; }
-    void togglePracticeFix() { practiceFixEnabled = !practiceFixEnabled; }
+    void togglePracticeFix() { noPracticeFix = !noPracticeFix; }
 
     void updateFrameOffset();
     void updateStatusLabel();

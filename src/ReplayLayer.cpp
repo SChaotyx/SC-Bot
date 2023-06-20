@@ -168,9 +168,9 @@ bool ReplayLayer::Init() {
     toggle->setPosition({30, -25});
     toggle->setScale(0.8f);
     toggle->setSizeMult(1.2f);
-    toggle->toggle(RS.isPracticeFix());
+    toggle->toggle(RS.isNoPracticeFix());
     m_pButtonMenu->addChild(toggle);
-    label = CCLabelBMFont::create("Practice Fix", "bigFont.fnt");
+    label = CCLabelBMFont::create("No practice fix", "bigFont.fnt");
     label->setAnchorPoint({0,0.5f});
     label->setScale(0.4f);
     label->setPosition({toggle->getPositionX() + 25, toggle->getPositionY()});

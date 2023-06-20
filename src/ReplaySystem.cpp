@@ -210,14 +210,49 @@ void ReplaySystem::clearReplay() {
 void ReplaySystem::Load() {
     if(SCManager::getSCModString("Bot_fps") != "")
         defFps = std::stoi(SCManager::getSCModString("Bot_fps"));
+    if(SCManager::getSCModString("Bot_speedhack") != "")
+        speedhack = std::stof(SCManager::getSCModString("Bot_speedhack"));
     autoRec = SCManager::getSCModVariable("Bot_autoRec");
     showStatus = SCManager::getSCModVariable("Bot_showStatus");
     realTime = SCManager::getSCModVariable("Bot_realTime");
+    noPracticeFix = SCManager::getSCModVariable("Bot_noPracticeFix");
+
+    if(SCManager::getSCModString("Rec_width") != "")
+        recorder.m_width = std::stoi(SCManager::getSCModString("Rec_width"));
+    if(SCManager::getSCModString("Rec_height") != "")
+        recorder.m_height = std::stoi(SCManager::getSCModString("Rec_height"));
+    if(SCManager::getSCModString("Rec_fps") != "")
+        recorder.m_fps = std::stoi(SCManager::getSCModString("Rec_fps"));
+    if(SCManager::getSCModString("Rec_untilEndDuration") != "")
+        recorder.m_afterEndDuration = std::stof(SCManager::getSCModString("Rec_untilEndDuration"));
+    if(SCManager::getSCModString("Rec_bitrate") != "")
+        recorder.m_bitrate = SCManager::getSCModString("Rec_bitrate");
+    if(SCManager::getSCModString("Rec_codec") != "")
+        recorder.m_codec = SCManager::getSCModString("Rec_codec");
+    if(SCManager::getSCModString("Rec_extraArgs") != "")
+        recorder.m_extraArgs = SCManager::getSCModString("Rec_extraArgs");
+    if(SCManager::getSCModString("Rec_extraAudioArgs") != "")
+        recorder.m_extraAudioArgs = SCManager::getSCModString("Rec_extraAudioArgs");
+    recorder.m_untilEnd = SCManager::getSCModVariable("Rec_untilEnd");
+    recorder.m_includeAudio = SCManager::getSCModVariable("Rec_includeAudio");
 }
 
 void ReplaySystem::Save() {
     SCManager::setSCModString("Bot_fps", std::to_string(defFps));
+    SCManager::setSCModString("Bot_speedhack", std::to_string(speedhack));
     SCManager::setSCModVariable("Bot_autoRec", autoRec);
     SCManager::setSCModVariable("Bot_showStatus", showStatus);
     SCManager::setSCModVariable("Bot_realTime", realTime);
+    SCManager::setSCModVariable("Bot_noPracticeFix", noPracticeFix);
+
+    SCManager::setSCModString("Rec_width", std::to_string(recorder.m_width));
+    SCManager::setSCModString("Rec_height", std::to_string(recorder.m_height));
+    SCManager::setSCModString("Rec_fps", std::to_string(recorder.m_fps));
+    SCManager::setSCModString("Rec_bitrate", recorder.m_bitrate);
+    SCManager::setSCModString("Rec_untilEndDuration", std::to_string(recorder.m_afterEndDuration));
+    SCManager::setSCModString("Rec_codec", recorder.m_codec);
+    SCManager::setSCModString("Rec_extraArgs", recorder.m_extraArgs);
+    SCManager::setSCModString("Rec_extraAudioArgs", recorder.m_extraAudioArgs);
+    SCManager::setSCModVariable("Rec_untilEnd", recorder.m_untilEnd);
+    SCManager::setSCModVariable("Rec_includeAudio", recorder.m_includeAudio);
 }
