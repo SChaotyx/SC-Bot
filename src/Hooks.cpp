@@ -20,7 +20,7 @@ void CCScheduler_Update(CCScheduler* self, float dt) {
     }
     auto& RS = ReplaySystem::get();
     auto PlayLayer = PlayLayer::get();
-    if(PlayLayer && (RS.isRecording() || RS.isPlaying() || RS.isAutoRecording())) {
+    if(PlayLayer && (RS.isRecording() || RS.isPlaying() || RS.isAutoRecording() || RS.getRecorder().m_recording)) {
         int fps = RS.getReplay().getFps();
         float target_dt = 1.f / fps;
         // prevent increase dif_dt during reset
@@ -28,7 +28,7 @@ void CCScheduler_Update(CCScheduler* self, float dt) {
         else dif_dt = 0.f;
         unsigned times = static_cast<int>(detected_dt / target_dt);
         for (unsigned i = 0; i < times; ++i) {
-            if(RS.isRealTime()) {
+            if(RS.isRealTime() || RS.getRecorder().m_recording) {
                 matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
             } else {
                 if(RS.isPlaying()) {
@@ -117,13 +117,28 @@ bool EditLevelLayer_Init(EditLevelLayer* self, GJGameLevel* level) {
     return true;
 }
 
-bool MenuLayer_Init() {
-    matdash::orig<&MenuLayer_Init>();
+bool MenuLayer_Init(MenuLayer* self) {
+    matdash::orig<&MenuLayer_Init>(self);
     static bool hasLoaded = false;
     if(!hasLoaded) {
         ReplaySystem::get().Load();
         hasLoaded = true;
     }
+
+    auto dir = CCDirector::sharedDirector();
+    auto winSize = dir->getWinSize();
+
+    auto menu = CCMenu::create();
+    menu->setPosition(0,0);
+    self->addChild(menu);
+
+    auto sprite = CCSprite::create("SC_ReplayBtn_001.png");
+    auto button = CCMenuItemSpriteExtra::create(sprite, self, menu_selector(ReplayLayer::OpenCallback));
+    button->setScale(0.85f);
+    button->m_fBaseScale = 0.85f;
+    button->setPosition(70, winSize.height - 23);
+    menu->addChild(button);
+
     return true;
 }
 
@@ -134,12 +149,17 @@ bool GDPlayLayer::Init(PlayLayer* self, GJGameLevel* level) {
     auto& RS = ReplaySystem::get();
     RS.clearReplay();
     RS.updateStatusLabel();
+    if(RS.getRecorder().m_recording) 
+        RS.getRecorder().Start(RS.getRecorder().videoPath);
+    RS.getRecorder().updateSongOffset(self);
     return true;
 }
 
 void GDPlayLayer::Update(PlayLayer* self, float dt) {
     auto& RS = ReplaySystem::get();
     if(RS.isPlaying()) RS.handlePlaying();
+    if(RS.getRecorder().m_recording)
+        RS.getRecorder().handleRecording(self, dt);
     matdash::orig<&GDPlayLayer::Update, matdash::Thiscall>(self, dt);
 }
 
@@ -171,6 +191,7 @@ void GDPlayLayer::Reset(PlayLayer*self) {
     auto& RS = ReplaySystem::get();
     matdash::orig<&GDPlayLayer::Reset>(self);
     RS.onReset();
+    RS.getRecorder().updateSongOffset(self);
 }
 
 void GDPlayLayer::PushButton(PlayLayer*self, int unk, bool button) {
