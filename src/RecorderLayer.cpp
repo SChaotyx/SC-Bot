@@ -89,7 +89,7 @@ bool RecorderLayer::Init() {
     m_widthInput = NumberInputNode::create(CCSize(64.f, 30.f));
     m_widthInput->set_value(static_cast<int>(RS.getRecorder().m_width));
     m_widthInput->input_node->setMaxLabelScale(0.7f);
-    m_widthInput->input_node->setMaxLabelLength(3);
+    m_widthInput->input_node->setMaxLabelLength(4);
     m_widthInput->setPosition(xpos,ypos);
     m_widthInput->callback = [&](auto& m_widthInput) {
         RS.getRecorder().m_width = m_widthInput.get_value();
@@ -104,7 +104,7 @@ bool RecorderLayer::Init() {
     m_heightInput = NumberInputNode::create(CCSize(64.f, 30.f));
     m_heightInput->set_value(static_cast<int>(RS.getRecorder().m_height));
     m_heightInput->input_node->setMaxLabelScale(0.7f);
-    m_heightInput->input_node->setMaxLabelLength(3);
+    m_heightInput->input_node->setMaxLabelLength(4);
     m_heightInput->setPosition(xpos + (80*1),ypos);
     m_heightInput->callback = [&](auto& m_heightInput) {
         RS.getRecorder().m_height = m_heightInput.get_value();
