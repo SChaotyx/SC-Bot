@@ -31,8 +31,8 @@ void Recorder::Start(const std::string& path) {
     auto PL = GM->getPlayLayer();
 
     auto songFile = PL->m_level->getAudioFileName();
-    auto fadeIn = false;//PL->m_pLevelSettings->m_fadeIn;
-    auto fadeOut = false;//PL->m_pLevelSettings->m_fadeOut;
+    auto fadeIn = PL->m_pLevelSettings->m_fadeIn;
+    auto fadeOut = PL->m_pLevelSettings->m_fadeOut;
     auto bgVolume = GM->m_fBackgroundMusicVolume;
     auto sfxVolume = GM->m_fEffectsVolume;
     auto isTestMode = PL->m_isTestMode;
