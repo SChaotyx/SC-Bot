@@ -112,7 +112,7 @@ bool ReplayLayer::Init() {
     auto speedhackInput = FloatInputNode::create(CCSize(64.f, 30.f));
     speedhackInput->set_value(RS.getSpeedhack());
     speedhackInput->input_node->setMaxLabelScale(0.7f);
-    speedhackInput->input_node->setMaxLabelLength(3);
+    speedhackInput->input_node->setMaxLabelLength(5);
     speedhackInput->setPosition((winSize.width / 2) + 130, (winSize.height / 2) + 25);
     speedhackInput->callback = [&](auto& input) {
         const auto value = input.get_value();
