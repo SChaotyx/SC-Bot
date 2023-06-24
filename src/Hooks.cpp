@@ -1,55 +1,72 @@
 #include "Hooks.h"
 #include "ReplaySystem.h"
 #include "ReplayLayer.h"
+#include <chrono>
+#include <thread>
 
 float dif_dt = 0.f;
-int frameCount = 0;
-float last_dt = 0;
-float detected_dt = 60 / 1;
 
 void CCScheduler_Update(CCScheduler* self, float dt) {
-    if(last_dt == dt) frameCount++;
-    else frameCount = 0;
-    last_dt = dt;
-    if (frameCount == 120) {
-        if(detected_dt != dt) {
-            detected_dt = dt;
-            std::cout << detected_dt << std::endl;
-        }
-        frameCount = 0;
-    }
     auto& RS = ReplaySystem::get();
-    auto PlayLayer = PlayLayer::get();
-    if(PlayLayer && !PlayLayer->m_bIsPaused && (RS.isRecording() || RS.isPlaying() || RS.isAutoRecording() || RS.getRecorder().m_recording)) {
-        int fps = RS.getReplay().getFps();
+    auto PL = PlayLayer::get();
+    if(PL && !PL->m_bIsPaused && (RS.isRecording() || RS.isPlaying() || RS.isAutoRecording() || RS.getRecorder().m_recording)) {
+        const auto fps = RS.getReplay().getFps();
+        auto speedhack = RS.getSpeedhack();
         float target_dt = 1.f / fps;
-        // prevent increase dif_dt during reset
-        if(PlayLayer->m_time > 0.f && RS.isPlaying()) dif_dt = dif_dt + (dt - detected_dt);
-        else dif_dt = 0.f;
-        unsigned times = static_cast<int>((detected_dt * RS.getSpeedhack()) / target_dt);
-        for (unsigned i = 0; i < times; ++i) {
-            if(RS.isRealTime() || RS.getRecorder().m_recording) {
-                matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
-            } else {
-                if(RS.isPlaying()) {
-                    // lag spike dont break playing but become unstable if it's so laggy
-                    matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
-                    while(dif_dt > target_dt) {
-                        matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
-                        dif_dt = dif_dt - target_dt;
-                    }
-                } else {
-                    // more stable but break playing
-                    if(PlayLayer->m_time > 0) // prevent reset lag
-                        matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt + ((dt - detected_dt) / times));
-                    else  
-                        matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
-                }
+        float actual_dt = static_cast<float>(CCDirector::sharedDirector()->getAnimationInterval());
+
+        if(speedhack > 1.f) {
+            dt *= speedhack;
+            actual_dt *= speedhack;
+            target_dt *= speedhack;
+        }
+
+        // pinche megahack
+        if(actual_dt < target_dt) {
+            matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, dt);
+            int static alerted = 0;
+            if(alerted > 2) {
+                matdash::orig<&GDPlayLayer::PauseGame>(PL, true);
+                FLAlertLayer::create(nullptr, "Warning!", "Ok", nullptr, "Please disable your FPS/TPS bypass or match with actual replay FPS.")->show();
+                alerted = 0;
+                return; 
             }
+            alerted ++;
+            return; 
+        }
+        
+        if(dt == 0.f) return matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
+        unsigned times = static_cast<int>(actual_dt / target_dt);
+        if(RS.isRealTime() || RS.getRecorder().m_recording || RS.getSpeedhack() < 1.f) {
+            for(unsigned i = 0; i < times; ++i) {
+                if(speedhack > 0 && speedhack < 1) {
+                    // bad idea? work fine lol
+                    float delayInSeconds = (target_dt / speedhack) - target_dt;
+                    std::chrono::milliseconds delay(static_cast<long long>(delayInSeconds * 1000));
+                    std::this_thread::sleep_for(delay);
+                    matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
+                } else 
+                    matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
+            }
+            return;
+        } else {
+            dif_dt += dt - actual_dt;
+            if(RS.isPlaying()){
+                // lag spike dont break replaying but become unstable if it's so laggy
+                while(dif_dt > target_dt) { ++times; dif_dt = dif_dt - target_dt; }
+                for(unsigned i = 0; i < times; ++i) {
+                    matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
+                }
+            } else {
+                // more stable but break replaying
+                for(unsigned i = 0; i < times; ++i)
+                    matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt + (dif_dt / times));
+                dif_dt = 0.f;
+            }
+            return;
         }
     } else {
-        matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, dt);
-        if(dif_dt > 0.f) dif_dt = 0.f;
+        return matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, dt);
     }
 }
 
@@ -137,6 +154,7 @@ bool GDPlayLayer::Init(PlayLayer* self, GJGameLevel* level) {
     if(RS.getRecorder().m_recording) 
         RS.getRecorder().Start(RS.getRecorder().videoPath);
     RS.getRecorder().updateSongOffset(self);
+    dif_dt = 0.f;
     return true;
 }
 
@@ -156,6 +174,7 @@ void GDPlayLayer::PauseGame(PlayLayer* self, bool unk) {
     auto& RS = ReplaySystem::get();
     if(RS.isRecording()) RS.recordAction(false, true, false);
     matdash::orig<&GDPlayLayer::PauseGame>(self, unk);
+    dif_dt = 0.f;
 }
 
 void GDPlayLayer::LevelComplete(PlayLayer* self) {
@@ -170,6 +189,7 @@ void GDPlayLayer::LevelComplete(PlayLayer* self) {
 void GDPlayLayer::Quit(PlayLayer* self) {
     ReplaySystem::get().resetState();
     matdash::orig<&GDPlayLayer::Quit>(self);
+    dif_dt = 0.f;
 }
 
 void GDPlayLayer::Reset(PlayLayer*self) {
@@ -177,6 +197,7 @@ void GDPlayLayer::Reset(PlayLayer*self) {
     matdash::orig<&GDPlayLayer::Reset>(self);
     RS.onReset();
     RS.getRecorder().updateSongOffset(self);
+    dif_dt = 0.f;
 }
 
 void GDPlayLayer::PushButton(PlayLayer*self, int unk, bool button) {
@@ -231,6 +252,7 @@ void GDPauseLayer::onResume(PauseLayer* self , CCObject* sender) {
         matdash::orig<&GDPlayLayer::Reset>(PL);
         RS.setRestartFlag(false);
     }
+    dif_dt = 0.f;
 }
 
 void GDPauseLayer::onRestart(PauseLayer* self, CCObject* sender) {
