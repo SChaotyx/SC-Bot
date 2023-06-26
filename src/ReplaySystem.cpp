@@ -207,6 +207,30 @@ void ReplaySystem::clearReplay() {
     }
 }
 
+void ReplaySystem::modifySpeedhack(bool inc) {
+    float actual_speed = getSpeedhack();
+    if(inc) {
+        if(actual_speed < 4.f) setSpeedhack(actual_speed + 0.100000000000f);
+    } else {
+        if(actual_speed > 0.1f) setSpeedhack(actual_speed - 0.100000000000f);
+    }
+    if(getSpeedhack() < 0.1f) setSpeedhack(0.1f);
+    if(getSpeedhack() > 4.f) setSpeedhack(4.f);
+    if(PlayLayer::get()) updateStatusLabel();
+}
+
+void ReplaySystem::modifyDefFps(bool inc) {
+    int deffps = getDefFps();
+    if(inc) {
+        if(deffps < 360) setDefFps(deffps + 60);
+    } else {
+        if(deffps > 60) setDefFps(deffps - 60);
+    }
+    if(getDefFps() < 60) setDefFps(60);
+    if(getDefFps() > 360) setDefFps(360);
+    if(PlayLayer::get()) updateStatusLabel();
+}
+
 void ReplaySystem::Load() {
     if(SCManager::getSCModString("Bot_fps") != "")
         defFps = std::stoi(SCManager::getSCModString("Bot_fps"));

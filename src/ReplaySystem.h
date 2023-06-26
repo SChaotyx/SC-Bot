@@ -57,7 +57,7 @@ public:
     inline bool isAutoRecording() { return autoRec; }
     inline bool isStatusLabel() { return showStatus; }
     inline bool isRestartFlag() { return restartFlag; }
-    inline bool isRealTime() { return realTime; }
+    inline bool isLockDelta() { return realTime; }
     inline bool isNoPracticeFix() { return noPracticeFix; }
 
     void togglePlaying();
@@ -66,6 +66,9 @@ public:
     void toggleStatusLabel() { showStatus = !showStatus; }
     void toggleRealTime() { realTime = !realTime; }
     void togglePracticeFix() { noPracticeFix = !noPracticeFix; }
+
+    void modifySpeedhack(bool);
+    void modifyDefFps(bool);
 
     void updateFrameOffset();
     void updateStatusLabel();

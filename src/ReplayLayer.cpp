@@ -93,36 +93,60 @@ bool ReplayLayer::Init() {
         button->addChild(label);
     }
 
+    auto leftsprite = CCSprite::createWithSpriteFrameName("edit_leftBtn_001.png");
+    leftsprite->setScale(0.75f);
+    auto rightsprite = CCSprite::createWithSpriteFrameName("edit_rightBtn_001.png");
+    rightsprite->setScale(0.75f);
+
     // FPS Input
-    auto fpsInput = NumberInputNode::create(CCSize(64.f, 30.f));
-    fpsInput->set_value(static_cast<int>(RS.getDefFps()));
-    fpsInput->input_node->setMaxLabelScale(0.7f);
-    fpsInput->input_node->setMaxLabelLength(3);
-    fpsInput->setPosition((winSize.width / 2) + 50, (winSize.height / 2) + 25);
-    fpsInput->callback = [&](auto& fpsInput) {
-        RS.setDefFps(static_cast<int>(fpsInput.get_value()));
-    };
-    m_pLayer->addChild(fpsInput, 11);
+    auto inputbg = extension::CCScale9Sprite::create("square02_small.png");
+    inputbg->setContentSize(CCSize(64.f, 30.f));
+    inputbg->setScale(1.f);
+    inputbg->setOpacity(100);
+    inputbg->setPosition(30, -20);
+    m_pButtonMenu->addChild(inputbg);
+    button = gd::CCMenuItemSpriteExtra::create(leftsprite, this, menu_selector(ReplayLayer::onModifyFps));
+    button->setPosition(inputbg->getPositionX() - 40, inputbg->getPositionY());
+    button->setTag(0);
+    m_pButtonMenu->addChild(button);
+    button = gd::CCMenuItemSpriteExtra::create(rightsprite, this, menu_selector(ReplayLayer::onModifyFps));
+    button->setPosition(inputbg->getPositionX() + 40, inputbg->getPositionY());
+    button->setTag(1);
+    m_pButtonMenu->addChild(button);
+    m_fpsInput = CCLabelBMFont::create("", "bigFont.fnt");
+    m_fpsInput->setPosition(inputbg->getPositionX(), inputbg->getPositionY());
+    m_fpsInput->setScale(0.7f);
+    m_pButtonMenu->addChild(m_fpsInput);
     label = CCLabelBMFont::create("FPS", "bigFont.fnt");
     label->setScale(0.4f);
-    label->setPosition(fpsInput->getPositionX(), fpsInput->getPositionY() + 25);
-    m_pLayer->addChild(label, 11);
+    label->setPosition(inputbg->getPositionX(), inputbg->getPositionY() + 25);
+    m_pButtonMenu->addChild(label, 11);
+    updateFpsInput();
 
-    // Speedhack Input
-    auto speedhackInput = FloatInputNode::create(CCSize(64.f, 30.f));
-    speedhackInput->set_value(RS.getSpeedhack());
-    speedhackInput->input_node->setMaxLabelScale(0.7f);
-    speedhackInput->input_node->setMaxLabelLength(5);
-    speedhackInput->setPosition((winSize.width / 2) + 130, (winSize.height / 2) + 25);
-    speedhackInput->callback = [&](auto& input) {
-        const auto value = input.get_value();
-        RS.setSpeedhack(value ? value.value() : 1.f);
-    };
-    m_pLayer->addChild(speedhackInput, 11);
+    // Speed hack Input
+    inputbg = extension::CCScale9Sprite::create("square02_small.png");
+    inputbg->setContentSize(CCSize(64.f, 30.f));
+    inputbg->setScale(1.f);
+    inputbg->setOpacity(100);
+    inputbg->setPosition(130, -20);
+    m_pButtonMenu->addChild(inputbg);
+    button = gd::CCMenuItemSpriteExtra::create(leftsprite, this, menu_selector(ReplayLayer::onModifySpdhk));
+    button->setPosition(inputbg->getPositionX() - 40, inputbg->getPositionY());
+    button->setTag(0);
+    m_pButtonMenu->addChild(button);
+    button = gd::CCMenuItemSpriteExtra::create(rightsprite, this, menu_selector(ReplayLayer::onModifySpdhk));
+    button->setPosition(inputbg->getPositionX() + 40, inputbg->getPositionY());
+    button->setTag(1);
+    m_pButtonMenu->addChild(button);
+    m_spdhkInput = CCLabelBMFont::create("", "bigFont.fnt");
+    m_spdhkInput->setPosition(inputbg->getPositionX(), inputbg->getPositionY());
+    m_spdhkInput->setScale(0.7f);
+    m_pButtonMenu->addChild(m_spdhkInput);
     label = CCLabelBMFont::create("Speedhack", "bigFont.fnt");
     label->setScale(0.4f);
-    label->setPosition(speedhackInput->getPositionX(), speedhackInput->getPositionY() + 25);
-    m_pLayer->addChild(label, 11);
+    label->setPosition(inputbg->getPositionX(), inputbg->getPositionY() + 25);
+    m_pButtonMenu->addChild(label, 11);
+    updateSpdhkInput();
 
     // auto record/save toggle
     auto* toggle = gd::CCMenuItemToggler::create(checkOffSprite, checkOnSprite, this, menu_selector(ReplayLayer::onToggleAutoRec));
@@ -155,9 +179,9 @@ bool ReplayLayer::Init() {
     toggle->setPosition({-150, -25});
     toggle->setScale(0.8f);
     toggle->setSizeMult(1.2f);
-    toggle->toggle(RS.isRealTime());
+    toggle->toggle(RS.isLockDelta());
     m_pButtonMenu->addChild(toggle);
-    label = CCLabelBMFont::create("No skip FPS", "bigFont.fnt");
+    label = CCLabelBMFont::create("Lock delta", "bigFont.fnt");
     label->setAnchorPoint({0,0.5f});
     label->setScale(0.4f);
     label->setPosition({toggle->getPositionX() + 25, toggle->getPositionY()});
@@ -165,7 +189,7 @@ bool ReplayLayer::Init() {
 
     // practicefix toggle
     toggle = gd::CCMenuItemToggler::create(checkOffSprite, checkOnSprite, this, menu_selector(ReplayLayer::onTogglePracticeFix));
-    toggle->setPosition({30, -25});
+    toggle->setPosition({30, 35});
     toggle->setScale(0.8f);
     toggle->setSizeMult(1.2f);
     toggle->toggle(RS.isNoPracticeFix());
@@ -215,6 +239,30 @@ void ReplayLayer::keyBackClicked() {
     auto& RS = ReplaySystem::get();
     RS.Save();
     FLAlertLayer::keyBackClicked();
+}
+
+void ReplayLayer::keyDown(enumKeyCodes key) {
+    auto& RS = ReplaySystem::get();
+    switch(key) {
+        case 27: 
+            keyBackClicked();
+        break;
+        case 188: 
+            RS.modifySpeedhack(false); updateSpdhkInput();
+        break;
+        case 190: 
+            RS.modifySpeedhack(true); updateSpdhkInput();
+        break;
+        case 'M':
+            RS.setSpeedhack(1.f); updateSpdhkInput();
+        break;
+        case 37: 
+            RS.modifyDefFps(false); updateFpsInput();
+        break;
+        case 39: 
+            RS.modifyDefFps(true); updateFpsInput();
+        break;
+    }
 }
 
 void ReplayLayer::onRecord(CCObject*) {
@@ -325,6 +373,34 @@ void ReplayLayer::updateReplayInfo() {
     stream << "FPS: " << replay.getFps() << "\n";
     stream << "Actions: " << replay.getActions().size();
     m_replayInfo->setString(stream.str().c_str()); 
+}
+
+void ReplayLayer::updateFpsInput() {
+    auto& RS = ReplaySystem::get();
+    std::stringstream stream;
+    stream << RS.getDefFps();
+    m_fpsInput->setString(stream.str().c_str());
+}
+
+void ReplayLayer::updateSpdhkInput() {
+    auto& RS = ReplaySystem::get();
+    std::stringstream stream;
+    stream << RS.getSpeedhack();
+    m_spdhkInput->setString(stream.str().c_str());
+}
+
+void ReplayLayer::onModifyFps(CCObject* sender) {
+    auto& RS = ReplaySystem::get();
+    if(sender->getTag() == 1) RS.modifyDefFps(true);
+    else RS.modifyDefFps(false);
+    updateFpsInput();
+}
+
+void ReplayLayer::onModifySpdhk(CCObject* sender) {
+    auto& RS = ReplaySystem::get();
+    if(sender->getTag() == 1) RS.modifySpeedhack(true);
+    else RS.modifySpeedhack(false);
+    updateSpdhkInput();
 }
 
 void ReplayLayer::loadReplay() {
