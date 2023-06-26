@@ -37,11 +37,11 @@ void CCScheduler_Update(CCScheduler* self, float dt) {
         
         if(dt == 0.f) return matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
         unsigned times = static_cast<int>(actual_dt / target_dt);
-        if(RS.isRealTime() || RS.getRecorder().m_recording || RS.getSpeedhack() < 1.f) {
+        if(RS.isLockDelta() || RS.getRecorder().m_recording || RS.getSpeedhack() < 1.f) {
             for(unsigned i = 0; i < times; ++i) {
                 if(speedhack > 0 && speedhack < 1) {
                     // bad idea? work fine lol
-                    float delayInSeconds = (target_dt / speedhack) - target_dt;
+                    float delayInSeconds = target_dt * (1.0f / speedhack);
                     std::chrono::milliseconds delay(static_cast<long long>(delayInSeconds * 1000));
                     std::this_thread::sleep_for(delay);
                     matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, target_dt);
@@ -68,6 +68,23 @@ void CCScheduler_Update(CCScheduler* self, float dt) {
     } else {
         return matdash::orig<&CCScheduler_Update, matdash::Thiscall>(self, dt);
     }
+}
+
+void CCKeyboardDispatcher_dispatchKeyboardMSG(CCKeyboardDispatcher* self, int key, bool down) {
+    if (down) {
+        auto& RS = ReplaySystem::get();
+        auto PL = PlayLayer::get();
+        if(PL && !PL->m_bIsPaused){
+            if (key == 'M') {
+                RS.setSpeedhack(1.f);
+            } else if (key == 188) { //,
+                RS.modifySpeedhack(false);
+            } else if (key == 190) { //.
+                RS.modifySpeedhack(true);
+            }
+        }
+    }
+    matdash::orig<&CCKeyboardDispatcher_dispatchKeyboardMSG>(self, key, down);
 }
 
 void GameObject_ActivateObject(GameObject* self, PlayerObject* player) {
@@ -272,6 +289,8 @@ auto cocos(const char* symbol) {
 
 void Hooks::Init() {
     matdash::add_hook<&CCScheduler_Update, matdash::Thiscall>(cocos("?update@CCScheduler@cocos2d@@UAEXM@Z"));
+    matdash::add_hook<&CCKeyboardDispatcher_dispatchKeyboardMSG>(cocos("?dispatchKeyboardMSG@CCKeyboardDispatcher@cocos2d@@QAE_NW4enumKeyCodes@2@_N@Z"));
+
     matdash::add_hook<&GameObject_ActivateObject>(gd::base + 0xef0e0);
     matdash::add_hook<&PlayerObject_RingJump>(gd::base + 0x1f4ff0);
     matdash::add_hook<&GJBaseGameLayer_BumpPlayer>(gd::base + 0x10ed50);
